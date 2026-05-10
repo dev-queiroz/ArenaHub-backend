@@ -1,0 +1,160 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  version  = "6.19"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+enum ReservationStatus {
+  Confirmado
+  Pendente
+  Cancelado
+}
+
+enum CourtStatus {
+  Disponivel
+  Ocupada
+  Manutencao
+}
+
+enum CoverType {
+  Aberta
+  Fechada
+}
+
+enum CustomerType {
+  Mensalista
+  Avulso
+}
+
+enum UserRole {
+  Administrador
+  Gerente
+  Recepcao
+}
+
+// ---------- Models ----------
+model Arena {
+  id          String          @id @default(uuid())
+  name        String
+  taxId       String
+  email       String
+  phone       String
+  address     String
+  settings    ArenaSettings?
+  users       User[]
+  courts      Court[]
+  customers   Customer[]
+  reservations Reservation[]
+  teamMembers TeamMember[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ArenaSettings {
+  id                String          @id @default(uuid())
+  arena             Arena           @relation(fields: [arenaId], references: [id])
+  arenaId           String          @unique
+  reservationReminder Boolean      @default(true)
+  paymentConfirmation Boolean      @default(true)
+  cancellationAlert   Boolean      @default(true)
+  marketingCampaigns  Boolean      @default(false)
+  pix                Boolean      @default(true)
+  creditCard         Boolean      @default(true)
+  debitCard          Boolean      @default(true)
+  cash               Boolean      @default(true)
+  bankTransfer       Boolean      @default(true)
+  operatingHours     OperatingHour[]
+}
+
+model OperatingHour {
+  id          String   @id @default(uuid())
+  settings    ArenaSettings @relation(fields: [settingsId], references: [id])
+  settingsId  String
+  day         String
+  enabled     Boolean
+  open        String
+  close       String
+}
+
+model User {
+  id          String   @id @default(uuid())
+  arena       Arena    @relation(fields: [arenaId], references: [id])
+  arenaId     String
+  name        String
+  email       String   @unique
+  password    String
+  role        UserRole
+  status      String
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Court {
+  id            String   @id @default(uuid())
+  arena         Arena    @relation(fields: [arenaId], references: [id])
+  arenaId       String
+  name          String
+  sport         String
+  coverType     CoverType @default(Aberta)
+  address       String?
+  zipCode       String?
+  city          String?
+  number        String?
+  pricePerHour  Decimal
+  status        CourtStatus @default(Disponivel)
+  features      String[]
+  reservations  Reservation[]
+}
+
+model Customer {
+  id                String       @id @default(uuid())
+  arena             Arena        @relation(fields: [arenaId], references: [id])
+  arenaId           String
+  name              String
+  email             String       @unique
+  phone             String
+  type              CustomerType @default(Avulso)
+  status            String       @default("Ativo")
+  favoriteSport     String?
+  totalSpent        Decimal      @default(0)
+  reservationsCount Int          @default(0)
+  notes             String?
+  reservations      Reservation[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @default(now()) @updatedAt
+}
+
+model Reservation {
+  id          String   @id @default(uuid())
+  arena       Arena    @relation(fields: [arenaId], references: [id])
+  arenaId     String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  String
+  court       Court    @relation(fields: [courtId], references: [id])
+  courtId     String
+  sport       String
+  date        DateTime
+  startTime   String
+  endTime     String
+  amount      Decimal
+  status      ReservationStatus
+  notes       String?
+}
+
+model TeamMember {
+  id      String   @id @default(uuid())
+  arena   Arena    @relation(fields: [arenaId], references: [id])
+  arenaId String
+  name    String
+  email   String   @unique
+  role    UserRole
+  status  String
+}
