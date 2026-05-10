@@ -64,6 +64,8 @@ export class ReservationsService {
       throw new BadRequestException('O horário de término deve ser após o horário de início');
     }
 
+    await this.validateOperatingHours(arenaId, dto.date, dto.startTime, dto.endTime);
+
     // 2. Collision detection (Double booking prevention)
     // Check if there is any reservation for the same court on the same day that overlaps
     const collision = await this.prisma.reservation.findFirst({
@@ -82,7 +84,7 @@ export class ReservationsService {
       throw new BadRequestException('Já existe uma reserva para esta quadra neste horário');
     }
 
-    return this.prisma.reservation.create({
+    const reservation = await this.prisma.reservation.create({
       data: {
         ...dto,
         date: new Date(dto.date + 'T00:00:00Z'), // Save as UTC midnight for consistent storage
@@ -93,6 +95,11 @@ export class ReservationsService {
         court: { select: { name: true } },
       },
     });
+
+    // Update customer stats
+    await this.syncCustomerStats(dto.customerId);
+
+    return reservation;
   }
 
   /**
@@ -128,15 +135,18 @@ export class ReservationsService {
       throw new BadRequestException('O horário de término deve ser após o horário de início');
     }
 
+    const dateToCheck = dto.date || existing.date.toISOString().slice(0, 10);
+    await this.validateOperatingHours(arenaId, dateToCheck, startTime, endTime);
+
     // Collision detection for update
-    const dateToCheck = dto.date ? new Date(dto.date + 'T00:00:00Z') : existing.date;
+    const dateObjToCheck = dto.date ? new Date(dto.date + 'T00:00:00Z') : existing.date;
     const courtIdToCheck = dto.courtId || existing.courtId;
 
     const collision = await this.prisma.reservation.findFirst({
       where: {
         id: { not: id },
         courtId: courtIdToCheck,
-        date: dateToCheck,
+        date: dateObjToCheck,
         status: { not: 'Cancelado' },
         AND: [
           { startTime: { lt: endTime } },
@@ -149,7 +159,7 @@ export class ReservationsService {
       throw new BadRequestException('Não é possível alterar para este horário pois já existe outra reserva conflitante');
     }
 
-    return this.prisma.reservation.update({
+    const updated = await this.prisma.reservation.update({
       where: { id },
       data,
       include: {
@@ -157,13 +167,72 @@ export class ReservationsService {
         court: { select: { name: true } },
       },
     });
+
+    // Update customer stats (in case amount or status changed)
+    await this.syncCustomerStats(updated.customerId);
+
+    return updated;
   }
 
   /**
    * Removes a reservation, ensuring tenant isolation.
    */
   async remove(id: string, arenaId: string) {
-    await this.findOne(id, arenaId);
-    return this.prisma.reservation.delete({ where: { id } });
+    const existing = await this.findOne(id, arenaId);
+    const deleted = await this.prisma.reservation.delete({ where: { id } });
+    
+    // Update customer stats
+    await this.syncCustomerStats(existing.customerId);
+
+    return deleted;
+  }
+
+  // --- Helpers for Automation ---
+
+  private async syncCustomerStats(customerId: string) {
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        customerId,
+        status: { not: 'Cancelado' },
+      },
+    });
+
+    const reservationsCount = reservations.length;
+    const totalSpent = reservations.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: { reservationsCount, totalSpent },
+    });
+  }
+
+  private async validateOperatingHours(arenaId: string, dateStr: string, startTime: string, endTime: string) {
+    const arena = await this.prisma.arena.findUnique({
+      where: { id: arenaId },
+      include: { settings: { include: { operatingHours: true } } },
+    });
+
+    if (!arena?.settings?.operatingHours?.length) return;
+
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday
+    
+    const daysMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const dayName = daysMap[dayOfWeek];
+
+    const operatingHour = arena.settings.operatingHours.find(h => 
+      h.day.toLowerCase().startsWith(dayName.toLowerCase().substring(0, 3))
+    );
+    
+    if (!operatingHour) return;
+
+    if (!operatingHour.enabled) {
+      throw new BadRequestException(`A arena está fechada: ${dayName}`);
+    }
+
+    if (startTime < operatingHour.open || endTime > operatingHour.close) {
+      throw new BadRequestException(`Horário fora de operação na ${dayName}. Funcionamento: ${operatingHour.open} às ${operatingHour.close}`);
+    }
   }
 }

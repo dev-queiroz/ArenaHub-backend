@@ -2,7 +2,7 @@ import {
   Controller, Get, Post, Put, Delete,
   Param, Body, UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { TenantId } from '../common/decorators/tenant-id.decorator';
@@ -23,18 +23,23 @@ export class ReservationsController {
 
   @Get()
   @ApiOperation({ summary: 'Listar todas as reservas da arena' })
+  @ApiResponse({ status: 200, description: 'Lista de reservas retornada com sucesso.' })
   findAll(@TenantId() arenaId: string) {
     return this.reservationsService.findAll(arenaId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obter detalhes de uma reserva' })
+  @ApiResponse({ status: 200, description: 'Reserva encontrada.' })
+  @ApiResponse({ status: 404, description: 'Reserva não encontrada.' })
   findOne(@Param('id') id: string, @TenantId() arenaId: string) {
     return this.reservationsService.findOne(id, arenaId);
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar nova reserva' })
+  @ApiResponse({ status: 201, description: 'Reserva criada com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Conflito de horários ou arena fechada no horário solicitado.' })
   create(@TenantId() arenaId: string, @Body() dto: CreateReservationDto) {
     return this.reservationsService.create(arenaId, dto);
   }
