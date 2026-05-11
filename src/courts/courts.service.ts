@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourtDto } from './dto/create-court.dto';
 import { UpdateCourtDto } from './dto/update-court.dto';
@@ -85,11 +85,59 @@ export class CourtsService {
    * Updates an existing court, ensuring tenant isolation.
    */
   async update(id: string, arenaId: string, dto: UpdateCourtDto) {
-    await this.findOne(id, arenaId);
-    return this.prisma.court.update({
+    const existing = await this.findOne(id, arenaId);
+    
+    let conflicts: any[] = [];
+    
+    // If setting to Maintenance, check for existing reservations
+    if (dto.status === 'Manutencao') {
+      const now = new Date();
+      // Combine date and time if maintenanceEnd is provided
+      const cutoff = dto.maintenanceEnd ? new Date(dto.maintenanceEnd) : now;
+
+      conflicts = await this.prisma.reservation.findMany({
+        where: {
+          courtId: id,
+          status: { in: ['Confirmado', 'Pendente'] },
+          OR: [
+            {
+              date: { gt: now }, // Future days
+            },
+            {
+              date: { 
+                gte: new Date(now.toISOString().split('T')[0] + 'T00:00:00Z') 
+              },
+              startTime: { gte: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') }
+            }
+          ]
+        },
+        include: {
+          customer: { select: { name: true, phone: true } }
+        }
+      });
+
+      // If maintenanceEnd is provided, only keep conflicts BEFORE the maintenance end
+      if (dto.maintenanceEnd) {
+        // This is a bit complex to filter precisely in SQL with the current schema (date as Date, startTime as string)
+        // Let's filter in memory for simplicity or just return all future ones and let the frontend decide.
+        // The user said: "se o dono disser que ela sai de manutenção e fica disponível antes de x, aí os que são depois de x continuam"
+        // So we only warn about those BEFORE x.
+        
+        conflicts = conflicts.filter(r => {
+          const [h, m] = r.startTime.split(':').map(Number);
+          const rDate = new Date(r.date);
+          rDate.setHours(h, m);
+          return rDate < cutoff;
+        });
+      }
+    }
+
+    const court = await this.prisma.court.update({
       where: { id },
       data: dto,
     });
+
+    return { court, conflicts };
   }
 
   /**
@@ -97,6 +145,17 @@ export class CourtsService {
    */
   async remove(id: string, arenaId: string) {
     await this.findOne(id, arenaId);
+
+    const hasReservations = await this.prisma.reservation.findFirst({
+      where: { courtId: id },
+    });
+
+    if (hasReservations) {
+      throw new BadRequestException(
+        'Não é possível excluir uma quadra que possui reservas. Cancele ou mova as reservas primeiro.',
+      );
+    }
+
     return this.prisma.court.delete({ where: { id } });
   }
 }

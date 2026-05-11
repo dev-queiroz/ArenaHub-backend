@@ -17,10 +17,74 @@ export class AutomationService {
   async handleNightlyTasks() {
     this.logger.log('Iniciando tarefas automatizadas noturnas...');
     
+    await this.archivePastReservations();
     await this.cancelPastPendingReservations();
     await this.syncCustomerStats();
     
     this.logger.log('Tarefas automatizadas noturnas concluídas.');
+  }
+
+  private async archivePastReservations() {
+    this.logger.log('Arquivando reservas passadas para o histórico...');
+    
+    const now = new Date();
+    const today = new Date(now.toISOString().split('T')[0] + 'T00:00:00Z');
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+    try {
+      // Find reservations that passed
+      const pastReservations = await this.prisma.reservation.findMany({
+        where: {
+          OR: [
+            { date: { lt: today } },
+            { 
+              date: today,
+              endTime: { lte: currentTime }
+            }
+          ]
+        },
+        include: {
+          court: { select: { name: true } }
+        }
+      });
+
+      if (pastReservations.length === 0) {
+        this.logger.log('Nenhuma reserva passada para arquivar.');
+        return;
+      }
+
+      // Move to history
+      await this.prisma.$transaction(
+        pastReservations.map(r => {
+          return this.prisma.reservationHistory.create({
+            data: {
+              arenaId: r.arenaId,
+              customerId: r.customerId,
+              courtId: r.courtId,
+              courtName: r.court.name,
+              sport: r.sport,
+              date: r.date,
+              startTime: r.startTime,
+              endTime: r.endTime,
+              amount: r.amount,
+              status: r.status,
+              notes: r.notes,
+            }
+          });
+        })
+      );
+
+      // Delete from active reservations
+      await this.prisma.reservation.deleteMany({
+        where: {
+          id: { in: pastReservations.map(r => r.id) }
+        }
+      });
+
+      this.logger.log(`${pastReservations.length} reservas arquivadas com sucesso.`);
+    } catch (error) {
+      this.logger.error('Erro ao arquivar reservas passadas', error);
+    }
   }
 
   private async cancelPastPendingReservations() {

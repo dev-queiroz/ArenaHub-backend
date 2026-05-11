@@ -55,7 +55,6 @@ export class ReservationsService {
     // Given the user is in Brazil (UTC-3):
     const reservationStart = new Date(year, month - 1, day, hours, minutes);
     const now = new Date();
-
     if (reservationStart < now) {
       throw new BadRequestException('A reserva não pode ser realizada em um horário que já passou');
     }
@@ -64,9 +63,36 @@ export class ReservationsService {
       throw new BadRequestException('O horário de término deve ser após o horário de início');
     }
 
+    // 2. Validate Customer Status
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: dto.customerId },
+      select: { status: true }
+    });
+
+    if (customer?.status === 'Inativo') {
+      throw new BadRequestException('Não é possível realizar reservas para clientes inativos');
+    }
+
+    // 3. Validate Court Status (Maintenance)
+    const court = await this.prisma.court.findUnique({
+      where: { id: dto.courtId },
+      select: { status: true, maintenanceEnd: true }
+    });
+
+    if (court?.status === 'Manutencao') {
+      // If there's a maintenanceEnd, check if the reservation is after it
+      if (court.maintenanceEnd) {
+        if (reservationStart < court.maintenanceEnd) {
+          throw new BadRequestException('Esta quadra está em manutenção até ' + court.maintenanceEnd.toLocaleString());
+        }
+      } else {
+        throw new BadRequestException('Esta quadra está em manutenção por tempo indeterminado');
+      }
+    }
+
     await this.validateOperatingHours(arenaId, dto.date, dto.startTime, dto.endTime);
 
-    // 2. Collision detection (Double booking prevention)
+    // 4. Collision detection (Double booking prevention)
     // Check if there is any reservation for the same court on the same day that overlaps
     const collision = await this.prisma.reservation.findFirst({
       where: {
@@ -157,6 +183,37 @@ export class ReservationsService {
 
     if (collision) {
       throw new BadRequestException('Não é possível alterar para este horário pois já existe outra reserva conflitante');
+    }
+
+    // New Validations
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: dto.customerId || existing.customerId },
+      select: { status: true }
+    });
+
+    if (customer?.status === 'Inativo') {
+      throw new BadRequestException('Não é possível realizar reservas para clientes inativos');
+    }
+
+    const court = await this.prisma.court.findUnique({
+      where: { id: dto.courtId || existing.courtId },
+      select: { status: true, maintenanceEnd: true }
+    });
+
+    if (court?.status === 'Manutencao') {
+      const dateToCheck = dto.date || existing.date.toISOString().slice(0, 10);
+      const timeToCheck = dto.startTime || existing.startTime;
+      const [y, m, d] = dateToCheck.split('-').map(Number);
+      const [h, min] = timeToCheck.split(':').map(Number);
+      const startToCheck = new Date(y, m - 1, d, h, min);
+
+      if (court.maintenanceEnd) {
+        if (startToCheck < court.maintenanceEnd) {
+          throw new BadRequestException('Esta quadra está em manutenção até ' + court.maintenanceEnd.toLocaleString());
+        }
+      } else {
+        throw new BadRequestException('Esta quadra está em manutenção por tempo indeterminado');
+      }
     }
 
     const updated = await this.prisma.reservation.update({

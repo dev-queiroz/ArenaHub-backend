@@ -110,6 +110,7 @@ model Court {
   number        String?
   pricePerHour  Decimal
   status        CourtStatus @default(Disponivel)
+  maintenanceEnd DateTime?
   features      String[]
   reservations  Reservation[]
 }
@@ -128,6 +129,7 @@ model Customer {
   reservationsCount Int          @default(0)
   notes             String?
   reservations      Reservation[]
+  history           ReservationHistory[]
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @default(now()) @updatedAt
 }
@@ -136,7 +138,7 @@ model Reservation {
   id          String   @id @default(uuid())
   arena       Arena    @relation(fields: [arenaId], references: [id])
   arenaId     String
-  customer    Customer @relation(fields: [customerId], references: [id])
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId  String
   court       Court    @relation(fields: [courtId], references: [id])
   courtId     String
@@ -147,6 +149,23 @@ model Reservation {
   amount      Decimal
   status      ReservationStatus
   notes       String?
+}
+
+model ReservationHistory {
+  id          String   @id @default(uuid())
+  arenaId     String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId  String
+  courtId     String
+  courtName   String
+  sport       String
+  date        DateTime
+  startTime   String
+  endTime     String
+  amount      Decimal
+  status      ReservationStatus
+  notes       String?
+  archivedAt  DateTime @default(now())
 }
 
 model TeamMember {

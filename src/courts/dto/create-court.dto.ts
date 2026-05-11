@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString, IsNotEmpty, IsNumber, IsEnum,
-  IsOptional, IsArray, Min,
+  IsOptional, IsArray, Min, IsDate,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CoverType, CourtStatus } from '@prisma/client';
 
 export class CreateCourtDto {
@@ -55,4 +56,10 @@ export class CreateCourtDto {
   @IsString({ each: true })
   @IsOptional()
   features?: string[];
+
+  @ApiPropertyOptional({ example: '2026-05-10T22:31:39.000Z' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  maintenanceEnd?: Date;
 }

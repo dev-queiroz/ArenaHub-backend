@@ -29,15 +29,9 @@ export class SettingsService {
       throw new NotFoundException('Arena não encontrada');
     }
 
-    const team = await this.prisma.user.findMany({
+    const team = await this.prisma.teamMember.findMany({
       where: { arenaId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        status: true,
-      },
+      orderBy: { name: 'asc' },
     });
 
     return {
