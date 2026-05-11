@@ -9,8 +9,9 @@ export class ReservationsService {
     return this.prisma.reservation.findMany({
       where: { arenaId },
       include: {
-        customer: { select: { name: true, email: true } },
+        customer: { select: { name: true, email: true, phone: true } },
         court: { select: { name: true } },
+        consumption: true,
       },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
@@ -19,8 +20,9 @@ export class ReservationsService {
     const reservation = await this.prisma.reservation.findFirst({
       where: { id, arenaId },
       include: {
-        customer: { select: { name: true, email: true } },
+        customer: { select: { name: true, email: true, phone: true } },
         court: { select: { name: true } },
+        consumption: true,
       },
     });
     if (!reservation) {
@@ -177,9 +179,13 @@ export class ReservationsService {
         customerId,
         status: { not: 'Cancelado' },
       },
+      include: { consumption: true }
     });
     const reservationsCount = reservations.length;
-    const totalSpent = reservations.reduce((acc, curr) => acc + Number(curr.amount), 0);
+    const totalSpent = reservations.reduce((acc, curr: any) => {
+      const consumptionTotal = curr.consumption?.reduce((sum: number, item: any) => sum + (Number(item.price) * item.quantity), 0) || 0;
+      return acc + Number(curr.amount) + consumptionTotal;
+    }, 0);
     await this.prisma.customer.update({
       where: { id: customerId },
       data: { reservationsCount, totalSpent },

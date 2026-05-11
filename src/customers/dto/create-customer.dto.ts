@@ -3,7 +3,7 @@ import {
   IsString, IsNotEmpty, IsEmail, IsEnum,
   IsOptional,
 } from 'class-validator';
-import { CustomerType } from '@prisma/client';
+import { CustomerType, PlayerLevel } from '@prisma/client';
 export class CreateCustomerDto {
   @ApiProperty({ example: 'Leonardo Albuquerque' })
   @IsString()
@@ -21,6 +21,10 @@ export class CreateCustomerDto {
   @IsEnum(CustomerType)
   @IsOptional()
   type?: CustomerType;
+  @ApiPropertyOptional({ example: 'Iniciante', enum: PlayerLevel })
+  @IsEnum(PlayerLevel)
+  @IsOptional()
+  level?: PlayerLevel;
   @ApiPropertyOptional({ example: 'Ativo' })
   @IsString()
   @IsOptional()

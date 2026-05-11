@@ -33,6 +33,13 @@ enum CustomerType {
   Avulso
 }
 
+enum PlayerLevel {
+  Iniciante
+  Intermediario
+  Avancado
+  Pro
+}
+
 enum UserRole {
   Administrador
   Gerente
@@ -125,6 +132,7 @@ model Customer {
   type              CustomerType @default(Avulso)
   status            String       @default("Ativo")
   favoriteSport     String?
+  level             PlayerLevel? @default(Iniciante)
   totalSpent        Decimal      @default(0)
   reservationsCount Int          @default(0)
   notes             String?
@@ -148,7 +156,19 @@ model Reservation {
   endTime     String
   amount      Decimal
   status      ReservationStatus
+  isOpen      Boolean      @default(false)
+  consumption ConsumptionItem[]
   notes       String?
+}
+
+model ConsumptionItem {
+  id            String      @id @default(uuid())
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId String
+  description   String
+  quantity      Int
+  price         Decimal
+  createdAt     DateTime    @default(now())
 }
 
 model ReservationHistory {

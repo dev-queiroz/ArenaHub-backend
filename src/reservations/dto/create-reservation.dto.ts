@@ -39,6 +39,9 @@ export class CreateReservationDto {
   })
   @IsEnum(ReservationStatus)
   status: ReservationStatus;
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  isOpen?: boolean;
   @ApiPropertyOptional({ example: 'Cliente prefere material premium.' })
   @IsString()
   @IsOptional()
