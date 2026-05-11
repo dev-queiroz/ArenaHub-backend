@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class AutomationService {
   private readonly logger = new Logger(AutomationService.name);
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleNightlyTasks() {
     this.logger.log('Iniciando tarefas automatizadas noturnas...');
@@ -119,3 +119,7 @@ export class AutomationService {
     }
   }
 }
+
+
+
+

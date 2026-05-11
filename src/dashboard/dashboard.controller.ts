@@ -9,10 +9,13 @@ import { DashboardService } from './dashboard.service';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('dashboard')
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) 
-  @Get()
+  constructor(private readonly dashboardService: DashboardService) {} @Get()
   @ApiOperation({ summary: 'Obter métricas consolidadas do dashboard' })
   getMetrics(@TenantId() arenaId: string) {
     return this.dashboardService.getMetrics(arenaId);
   }
 }
+
+
+
+

@@ -14,8 +14,7 @@ import { UpdateCourtDto } from './dto/update-court.dto';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('courts')
 export class CourtsController {
-  constructor(private readonly courtsService: CourtsService) 
-  @Get()
+  constructor(private readonly courtsService: CourtsService) {} @Get()
   @ApiOperation({ summary: 'Listar todas as quadras da arena' })
   findAll(@TenantId() arenaId: string) {
     return this.courtsService.findAll(arenaId);
@@ -45,3 +44,7 @@ export class CourtsController {
     return this.courtsService.remove(id, arenaId);
   }
 }
+
+
+
+

@@ -4,7 +4,7 @@ import { CreateCourtDto } from './dto/create-court.dto';
 import { UpdateCourtDto } from './dto/update-court.dto';
 @Injectable()
 export class CourtsService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async findAll(arenaId: string) {
     const courts = await this.prisma.court.findMany({
       where: { arenaId },
@@ -109,3 +109,7 @@ export class CourtsService {
     return this.prisma.court.delete({ where: { id } });
   }
 }
+
+
+
+

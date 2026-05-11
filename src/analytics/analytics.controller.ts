@@ -9,8 +9,7 @@ import { AnalyticsService } from './analytics.service';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('analytics')
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) 
-  @Get()
+  constructor(private readonly analyticsService: AnalyticsService) {} @Get()
   @ApiOperation({ summary: 'Obter relatório analítico da arena' })
   @ApiQuery({ name: 'period', required: false, enum: ['7d', '30d', '90d'] })
   getReport(
@@ -20,3 +19,7 @@ export class AnalyticsController {
     return this.analyticsService.getReport(arenaId, period);
   }
 }
+
+
+
+

@@ -7,8 +7,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) 
-  @Post('login')
+  constructor(private readonly authService: AuthService) {} @Post('login')
   @ApiOperation({ summary: 'Autenticar usuário e obter token JWT' })
   @ApiBody({ type: LoginDto })
   async login(@Body() dto: LoginDto) {
@@ -38,3 +37,7 @@ export class AuthController {
     return this.authService.updateProfile(req.user.sub, body);
   }
 }
+
+
+
+

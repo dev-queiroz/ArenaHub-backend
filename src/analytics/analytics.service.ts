@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async getReport(arenaId: string, period: string = '30d') {
     const now = new Date();
     const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
@@ -22,7 +22,7 @@ export class AnalyticsService {
     const totalRevenue = billable.reduce((sum, r) => sum + Number(r.amount), 0);
     const averageTicket = billable.length > 0 ? totalRevenue / billable.length : 0;
     const activeCustomers = customers.filter((c) => c.status === 'Ativo').length;
-    const revenueBySportMap: Record<string, number> = ;
+    const revenueBySportMap: Record<string, number> = {};
     billable.forEach((r) => {
       revenueBySportMap[r.sport] = (revenueBySportMap[r.sport] ?? 0) + Number(r.amount);
     });
@@ -61,3 +61,7 @@ export class AnalyticsService {
     };
   }
 }
+
+
+
+

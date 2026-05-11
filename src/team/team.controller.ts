@@ -14,8 +14,7 @@ import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('team')
 export class TeamController {
-  constructor(private readonly teamService: TeamService) 
-  @Get()
+  constructor(private readonly teamService: TeamService) {} @Get()
   @ApiOperation({ summary: 'Listar membros da equipe' })
   findAll(@TenantId() arenaId: string) {
     return this.teamService.findAll(arenaId);
@@ -45,3 +44,7 @@ export class TeamController {
     return this.teamService.remove(id, arenaId);
   }
 }
+
+
+
+

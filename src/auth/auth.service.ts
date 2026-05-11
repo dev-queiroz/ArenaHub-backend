@@ -10,7 +10,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) 
+  ) {} 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -122,7 +122,7 @@ export class AuthService {
     userId: string,
     data: { name?: string; email?: string; phone?: string },
   ) {
-    const updateData: any = ;
+    const updateData: any = {};
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phone) updateData.phone = data.phone;
@@ -140,3 +140,7 @@ export class AuthService {
     });
   }
 }
+
+
+
+

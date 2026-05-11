@@ -4,7 +4,7 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 @Injectable()
 export class ReservationsService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async findAll(arenaId: string) {
     return this.prisma.reservation.findMany({
       where: { arenaId },
@@ -214,3 +214,7 @@ export class ReservationsService {
     }
   }
 }
+
+
+
+

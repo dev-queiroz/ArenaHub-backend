@@ -4,7 +4,7 @@ import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 @Injectable()
 export class TeamService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async findAll(arenaId: string) {
     return this.prisma.teamMember.findMany({
       where: { arenaId },
@@ -37,3 +37,7 @@ export class TeamService {
     return this.prisma.teamMember.delete({ where: { id } });
   }
 }
+
+
+
+

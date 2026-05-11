@@ -14,8 +14,7 @@ import { UpdateReservationDto } from './dto/update-reservation.dto';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('reservations')
 export class ReservationsController {
-  constructor(private readonly reservationsService: ReservationsService) 
-  @Get()
+  constructor(private readonly reservationsService: ReservationsService) {} @Get()
   @ApiOperation({ summary: 'Listar todas as reservas da arena' })
   @ApiResponse({ status: 200, description: 'Lista de reservas retornada com sucesso.' })
   findAll(@TenantId() arenaId: string) {
@@ -50,3 +49,7 @@ export class ReservationsController {
     return this.reservationsService.remove(id, arenaId);
   }
 }
+
+
+
+

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async getMetrics(arenaId: string) {
     const [reservations, courts, customers] = await Promise.all([
       this.prisma.reservation.findMany({
@@ -41,7 +41,7 @@ export class DashboardService {
     const occupancy = totalAvailableMinutes > 0 
       ? Math.min(100, Math.round((reservedMinutes / totalAvailableMinutes) * 100))
       : 0;
-    const sportMix: Record<string, number> = ;
+    const sportMix: Record<string, number> = {};
     reservations.forEach((r) => {
       sportMix[r.sport] = (sportMix[r.sport] ?? 0) + 1;
     });
@@ -71,3 +71,7 @@ export class DashboardService {
     };
   }
 }
+
+
+
+

@@ -5,4 +5,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   providers: [AutomationService],
 })
-export class AutomationModule 
+export class AutomationModule {}
+
+
+

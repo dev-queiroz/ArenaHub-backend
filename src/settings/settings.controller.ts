@@ -13,8 +13,7 @@ import { UpdateArenaProfileDto } from './dto/update-arena-profile.dto';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('settings')
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) 
-  @Get()
+  constructor(private readonly settingsService: SettingsService) {} @Get()
   @ApiOperation({ summary: 'Obter configurações da arena' })
   getSettings(@TenantId() arenaId: string) {
     return this.settingsService.getSettings(arenaId);
@@ -44,3 +43,7 @@ export class SettingsController {
     return this.settingsService.updateOperatingHours(arenaId, body.hours);
   }
 }
+
+
+
+

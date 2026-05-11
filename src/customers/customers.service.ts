@@ -4,7 +4,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 @Injectable()
 export class CustomersService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async findAll(arenaId: string) {
     return this.prisma.customer.findMany({
       where: { arenaId },
@@ -40,3 +40,7 @@ export class CustomersService {
     return this.prisma.customer.delete({ where: { id } });
   }
 }
+
+
+
+

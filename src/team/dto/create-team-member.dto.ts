@@ -17,3 +17,7 @@ export class CreateTeamMemberDto {
   @IsEnum(['Ativo', 'Convite pendente'])
   status: string;
 }
+
+
+
+

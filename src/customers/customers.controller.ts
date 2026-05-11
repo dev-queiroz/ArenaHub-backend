@@ -14,8 +14,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('customers')
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) 
-  @Get()
+  constructor(private readonly customersService: CustomersService) {} @Get()
   @ApiOperation({ summary: 'Listar todos os clientes da arena' })
   findAll(@TenantId() arenaId: string) {
     return this.customersService.findAll(arenaId);
@@ -45,3 +44,7 @@ export class CustomersController {
     return this.customersService.remove(id, arenaId);
   }
 }
+
+
+
+

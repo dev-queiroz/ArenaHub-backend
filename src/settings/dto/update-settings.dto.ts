@@ -11,3 +11,7 @@ export class UpdateSettingsDto {
   @ApiPropertyOptional() @IsBoolean() @IsOptional() cash?: boolean;
   @ApiPropertyOptional() @IsBoolean() @IsOptional() bankTransfer?: boolean;
 }
+
+
+
+

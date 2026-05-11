@@ -6,4 +6,7 @@ import { TeamController } from './team.controller';
   providers: [TeamService],
   exports: [TeamService],
 })
-export class TeamModule 
+export class TeamModule {}
+
+
+

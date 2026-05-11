@@ -35,4 +35,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     },
   ],
 })
-export class AppModule 
+export class AppModule {}
+
+
+

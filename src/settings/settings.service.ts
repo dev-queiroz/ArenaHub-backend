@@ -4,7 +4,7 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateArenaProfileDto } from './dto/update-arena-profile.dto';
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) 
+  constructor(private readonly prisma: PrismaService) {} 
   async getSettings(arenaId: string) {
     const arena = await this.prisma.arena.findUnique({
       where: { id: arenaId },
@@ -96,7 +96,7 @@ export class SettingsService {
   ) {
     const settings = await this.prisma.arenaSettings.upsert({
       where: { arenaId },
-      update: ,
+      update: {},
       create: { arenaId },
     });
     await this.prisma.operatingHour.deleteMany({
@@ -113,3 +113,7 @@ export class SettingsService {
     });
   }
 }
+
+
+
+
