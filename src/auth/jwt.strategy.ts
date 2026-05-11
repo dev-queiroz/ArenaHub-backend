@@ -2,12 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-
-/**
- * JWT Passport strategy.
- * Extracts and validates the JWT from the Authorization Bearer header.
- * The validated payload is injected into request.user.
- */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
@@ -17,11 +11,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: configService.get<string>('JWT_SECRET') || 'secret',
     });
   }
-
-  /**
-   * Called after JWT verification succeeds.
-   * Returns the payload which becomes request.user.
-   */
   async validate(payload: {
     sub: string;
     email: string;

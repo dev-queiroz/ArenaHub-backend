@@ -1,9 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
-
-/**
- * DTO for updating arena notification and payment preferences.
- */
 export class UpdateSettingsDto {
   @ApiPropertyOptional() @IsBoolean() @IsOptional() reservationReminder?: boolean;
   @ApiPropertyOptional() @IsBoolean() @IsOptional() paymentConfirmation?: boolean;

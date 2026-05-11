@@ -9,36 +9,27 @@ import { TenantId } from '../common/decorators/tenant-id.decorator';
 import { CourtsService } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
 import { UpdateCourtDto } from './dto/update-court.dto';
-
-/**
- * CourtsController — CRUD endpoints for sports courts.
- * All routes require JWT auth and tenant context.
- */
 @ApiTags('Courts')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('courts')
 export class CourtsController {
-  constructor(private readonly courtsService: CourtsService) {}
-
+  constructor(private readonly courtsService: CourtsService) 
   @Get()
   @ApiOperation({ summary: 'Listar todas as quadras da arena' })
   findAll(@TenantId() arenaId: string) {
     return this.courtsService.findAll(arenaId);
   }
-
   @Get(':id')
   @ApiOperation({ summary: 'Obter detalhes de uma quadra' })
   findOne(@Param('id') id: string, @TenantId() arenaId: string) {
     return this.courtsService.findOne(id, arenaId);
   }
-
   @Post()
   @ApiOperation({ summary: 'Cadastrar nova quadra' })
   create(@TenantId() arenaId: string, @Body() dto: CreateCourtDto) {
     return this.courtsService.create(arenaId, dto);
   }
-
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar quadra existente' })
   update(
@@ -48,7 +39,6 @@ export class CourtsController {
   ) {
     return this.courtsService.update(id, arenaId, dto);
   }
-
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir quadra' })
   remove(@Param('id') id: string, @TenantId() arenaId: string) {

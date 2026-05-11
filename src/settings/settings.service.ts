@@ -2,19 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateArenaProfileDto } from './dto/update-arena-profile.dto';
-
-/**
- * SettingsService manages arena configuration: profile, operating hours,
- * notification preferences, and payment methods.
- * All queries are scoped by arenaId.
- */
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  /**
-   * Retrieves the full settings for the arena, including operating hours.
-   */
+  constructor(private readonly prisma: PrismaService) 
   async getSettings(arenaId: string) {
     const arena = await this.prisma.arena.findUnique({
       where: { id: arenaId },
@@ -24,16 +14,13 @@ export class SettingsService {
         },
       },
     });
-
     if (!arena) {
       throw new NotFoundException('Arena não encontrada');
     }
-
     const team = await this.prisma.teamMember.findMany({
       where: { arenaId },
       orderBy: { name: 'asc' },
     });
-
     return {
       profile: {
         arenaName: arena.name,
@@ -63,10 +50,6 @@ export class SettingsService {
       team,
     };
   }
-
-  /**
-   * Updates the arena profile (name, taxId, email, phone, address).
-   */
   async updateProfile(arenaId: string, dto: UpdateArenaProfileDto) {
     return this.prisma.arena.update({
       where: { id: arenaId },
@@ -79,10 +62,6 @@ export class SettingsService {
       },
     });
   }
-
-  /**
-   * Updates notification and payment preferences.
-   */
   async updateSettings(arenaId: string, dto: UpdateSettingsDto) {
     return this.prisma.arenaSettings.upsert({
       where: { arenaId },
@@ -111,26 +90,18 @@ export class SettingsService {
       },
     });
   }
-
-  /**
-   * Replaces all operating hours for the arena.
-   */
   async updateOperatingHours(
     arenaId: string,
     hours: { day: string; enabled: boolean; open: string; close: string }[],
   ) {
-    // Ensure ArenaSettings exists
     const settings = await this.prisma.arenaSettings.upsert({
       where: { arenaId },
-      update: {},
+      update: ,
       create: { arenaId },
     });
-
-    // Delete existing hours and recreate
     await this.prisma.operatingHour.deleteMany({
       where: { settingsId: settings.id },
     });
-
     return this.prisma.operatingHour.createMany({
       data: hours.map((h) => ({
         settingsId: settings.id,

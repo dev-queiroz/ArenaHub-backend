@@ -8,24 +8,17 @@ import { TenantId } from '../common/decorators/tenant-id.decorator';
 import { SettingsService } from './settings.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateArenaProfileDto } from './dto/update-arena-profile.dto';
-
-/**
- * SettingsController — endpoints for arena configuration management.
- * All routes require JWT auth and tenant context.
- */
 @ApiTags('Settings')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('settings')
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) {}
-
+  constructor(private readonly settingsService: SettingsService) 
   @Get()
   @ApiOperation({ summary: 'Obter configurações da arena' })
   getSettings(@TenantId() arenaId: string) {
     return this.settingsService.getSettings(arenaId);
   }
-
   @Put('profile')
   @ApiOperation({ summary: 'Atualizar perfil da arena' })
   updateProfile(
@@ -34,7 +27,6 @@ export class SettingsController {
   ) {
     return this.settingsService.updateProfile(arenaId, dto);
   }
-
   @Put('preferences')
   @ApiOperation({ summary: 'Atualizar notificações e pagamentos' })
   updateSettings(
@@ -43,7 +35,6 @@ export class SettingsController {
   ) {
     return this.settingsService.updateSettings(arenaId, dto);
   }
-
   @Put('hours')
   @ApiOperation({ summary: 'Atualizar horários de funcionamento' })
   updateHours(

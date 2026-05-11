@@ -5,41 +5,28 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UserRole } from '@prisma/client';
-
-/**
- * AuthService handles user credential validation and JWT generation.
- */
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
-
-  /**
-   * Registers a new arena and its owner.
-   */
+  ) 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-
     if (existingUser) {
       throw new UnauthorizedException('Email já cadastrado');
     }
-
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    // Use transaction to ensure both Arena and User are created
     const newUser = await this.prisma.$transaction(async (tx) => {
-      // 1. Create the Arena
       const arena = await tx.arena.create({
         data: {
           name: dto.arenaName,
           taxId: dto.taxId,
-          email: dto.email, // Use owner email as default
-          phone: '', // To be filled later
-          address: '', // To be filled later
+          email: dto.email, 
+          phone: '', 
+          address: '', 
           settings: {
             create: {
               operatingHours: {
@@ -57,8 +44,6 @@ export class AuthService {
           },
         },
       });
-
-      // 2. Create the Owner User
       return tx.user.create({
         data: {
           name: dto.name,
@@ -70,15 +55,12 @@ export class AuthService {
         },
       });
     });
-
-    // 3. Return login data immediately after registration transaction completes
     const payload = {
       sub: newUser.id,
       email: newUser.email,
       role: newUser.role,
       arenaId: newUser.arenaId,
     };
-
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -90,32 +72,23 @@ export class AuthService {
       },
     };
   }
-
-  /**
-   * Validates user credentials and returns a signed JWT token.
-   * The token payload includes the userId, email, role, and arenaId (tenantId).
-   */
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
-
     const passwordValid = await bcrypt.compare(dto.password, user.password);
     if (!passwordValid) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
-
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
       arenaId: user.arenaId,
     };
-
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -127,10 +100,6 @@ export class AuthService {
       },
     };
   }
-
-  /**
-   * Returns the profile of the currently authenticated user.
-   */
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -144,26 +113,19 @@ export class AuthService {
         createdAt: true,
       },
     });
-
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado');
     }
-
     return user;
   }
-
-  /**
-   * Updates the profile of the currently authenticated user.
-   */
   async updateProfile(
     userId: string,
     data: { name?: string; email?: string; phone?: string },
   ) {
-    const updateData: any = {};
+    const updateData: any = ;
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phone) updateData.phone = data.phone;
-
     return this.prisma.user.update({
       where: { id: userId },
       data: updateData,

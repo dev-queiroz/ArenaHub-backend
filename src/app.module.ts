@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
-
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -14,12 +13,6 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AutomationModule } from './automation/automation.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-
-/**
- * Root application module.
- * Registers all feature modules, the Prisma ORM module,
- * configuration, and the global exception filter.
- */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -42,4 +35,4 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     },
   ],
 })
-export class AppModule {}
+export class AppModule 

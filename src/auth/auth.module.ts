@@ -6,11 +6,6 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
-
-/**
- * Authentication module using JWT + Passport.
- * Provides login endpoint and JWT validation strategy.
- */
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -29,4 +24,4 @@ import { JwtAuthGuard } from './jwt-auth.guard';
   providers: [AuthService, JwtStrategy, JwtAuthGuard],
   exports: [JwtAuthGuard, JwtStrategy, PassportModule],
 })
-export class AuthModule {}
+export class AuthModule 
