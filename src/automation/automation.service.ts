@@ -73,14 +73,14 @@ export class AutomationService {
     try {
       const result = await this.prisma.reservation.updateMany({
         where: {
-          status: 'Pendente',
+          status: 'Pending',
           date: {
             lt: today,
           },
         },
         data: {
-          status: 'Cancelado',
-          notes: 'Cancelada automaticamente pelo sistema (não confirmada e data expirada).',
+          status: 'Cancelled',
+          notes: 'Automatically cancelled by system (not confirmed and date expired).',
         },
       });
       this.logger.log(`Foram canceladas ${result.count} reservas pendentes expiradas.`);
@@ -99,7 +99,7 @@ export class AutomationService {
         const reservations = await this.prisma.reservation.findMany({
           where: {
             customerId: customer.id,
-            status: { not: 'Cancelado' },
+            status: { not: 'Cancelled' },
           },
         });
         const reservationsCount = reservations.length;
@@ -119,6 +119,7 @@ export class AutomationService {
     }
   }
 }
+
 
 
 
