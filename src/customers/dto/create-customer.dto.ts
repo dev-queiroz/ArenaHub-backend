@@ -17,15 +17,15 @@ export class CreateCustomerDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
-  @ApiPropertyOptional({ example: 'Mensalista', enum: CustomerType })
+  @ApiPropertyOptional({ example: 'Monthly', enum: CustomerType })
   @IsEnum(CustomerType)
   @IsOptional()
   type?: CustomerType;
-  @ApiPropertyOptional({ example: 'Iniciante', enum: PlayerLevel })
+  @ApiPropertyOptional({ example: 'Beginner', enum: PlayerLevel })
   @IsEnum(PlayerLevel)
   @IsOptional()
   level?: PlayerLevel;
-  @ApiPropertyOptional({ example: 'Ativo' })
+  @ApiPropertyOptional({ example: 'Active' })
   @IsString()
   @IsOptional()
   status?: string;
@@ -38,6 +38,7 @@ export class CreateCustomerDto {
   @IsOptional()
   notes?: string;
 }
+
 
 
 
