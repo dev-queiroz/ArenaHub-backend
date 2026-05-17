@@ -16,7 +16,7 @@ export class CustomersService {
       where: { id, arenaId },
     });
     if (!customer) {
-      throw new NotFoundException('Cliente não encontrado');
+      throw new NotFoundException('Customer not found');
     }
     return customer;
   }
@@ -40,6 +40,7 @@ export class CustomersService {
     return this.prisma.customer.delete({ where: { id } });
   }
 }
+
 
 
 
