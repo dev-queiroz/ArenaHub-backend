@@ -14,7 +14,7 @@ export class CreateCourtDto {
   @IsString()
   @IsNotEmpty()
   sport: string;
-  @ApiProperty({ example: 'Aberta', enum: CoverType })
+  @ApiProperty({ example: 'Open', enum: CoverType })
   @IsEnum(CoverType)
   coverType: CoverType;
   @ApiPropertyOptional({ example: '05001-000' })
@@ -37,7 +37,7 @@ export class CreateCourtDto {
   @IsNumber()
   @Min(0)
   pricePerHour: number;
-  @ApiPropertyOptional({ example: 'Disponivel', enum: CourtStatus })
+  @ApiPropertyOptional({ example: 'Available', enum: CourtStatus })
   @IsEnum(CourtStatus)
   @IsOptional()
   status?: CourtStatus;
@@ -50,8 +50,15 @@ export class CreateCourtDto {
   @Type(() => Date)
   @IsDate()
   @IsOptional()
+  maintenanceStart?: Date;
+
+  @ApiPropertyOptional({ example: '2026-05-10T22:31:39.000Z' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
   maintenanceEnd?: Date;
 }
+
 
 
 
