@@ -23,14 +23,14 @@ export class ReservationsController {
   @Get(':id')
   @ApiOperation({ summary: 'Obter detalhes de uma reserva' })
   @ApiResponse({ status: 200, description: 'Reserva encontrada.' })
-  @ApiResponse({ status: 404, description: 'Reserva não encontrada.' })
+  @ApiResponse({ status: 404, description: 'Reservation not found.' })
   findOne(@Param('id') id: string, @TenantId() arenaId: string) {
     return this.reservationsService.findOne(id, arenaId);
   }
   @Post()
   @ApiOperation({ summary: 'Criar nova reserva' })
   @ApiResponse({ status: 201, description: 'Reserva criada com sucesso.' })
-  @ApiResponse({ status: 400, description: 'Conflito de horários ou arena fechada no horário solicitado.' })
+  @ApiResponse({ status: 400, description: 'Conflito de horários ou arena Closed no horário solicitado.' })
   create(@TenantId() arenaId: string, @Body() dto: CreateReservationDto) {
     return this.reservationsService.create(arenaId, dto);
   }
@@ -49,6 +49,7 @@ export class ReservationsController {
     return this.reservationsService.remove(id, arenaId);
   }
 }
+
 
 
 

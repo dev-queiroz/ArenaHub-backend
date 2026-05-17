@@ -4,7 +4,26 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 @Injectable()
 export class ReservationsService {
-  constructor(private readonly prisma: PrismaService) {} 
+  constructor(private readonly prisma: PrismaService) {}
+
+  private isReservationInsideMaintenanceWindow(
+    reservationDate: string,
+    reservationTime: string,
+    maintenanceStart?: Date | null,
+    maintenanceEnd?: Date | null,
+  ) {
+    if (!maintenanceStart && !maintenanceEnd) {
+      return false;
+    }
+
+    const [year, month, day] = reservationDate.split('-').map(Number);
+    const [hours, minutes] = reservationTime.split(':').map(Number);
+    const reservationStart = new Date(year, month - 1, day, hours, minutes);
+    const maintenanceStartDate = maintenanceStart ?? new Date(0);
+    const maintenanceEndDate = maintenanceEnd ?? new Date('9999-12-31T23:59:59.999Z');
+
+    return reservationStart >= maintenanceStartDate && reservationStart <= maintenanceEndDate;
+  }
   async findAll(arenaId: string) {
     return this.prisma.reservation.findMany({
       where: { arenaId },
@@ -26,7 +45,7 @@ export class ReservationsService {
       },
     });
     if (!reservation) {
-      throw new NotFoundException('Reserva não encontrada');
+      throw new NotFoundException('Reservation not found');
     }
     return reservation;
   }
@@ -36,37 +55,41 @@ export class ReservationsService {
     const reservationStart = new Date(year, month - 1, day, hours, minutes);
     const now = new Date();
     if (reservationStart < now) {
-      throw new BadRequestException('A reserva não pode ser realizada em um horário que já passou');
+      throw new BadRequestException('Reservations cannot be made for a past time');
     }
     if (dto.endTime <= dto.startTime) {
-      throw new BadRequestException('O horário de término deve ser após o horário de início');
+      throw new BadRequestException('End time must be after start time');
     }
     const customer = await this.prisma.customer.findUnique({
       where: { id: dto.customerId },
       select: { status: true }
     });
-    if (customer?.status === 'Inativo') {
-      throw new BadRequestException('Não é possível realizar reservas para clientes inativos');
+    if (customer?.status === 'Inactive') {
+      throw new BadRequestException('Cannot make reservations for inactive customers');
     }
     const court = await this.prisma.court.findUnique({
       where: { id: dto.courtId },
-      select: { status: true, maintenanceEnd: true }
+      select: { status: true, maintenanceStart: true, maintenanceEnd: true }
     });
-    if (court?.status === 'Manutencao') {
-      if (court.maintenanceEnd) {
-        if (reservationStart < court.maintenanceEnd) {
-          throw new BadRequestException('Esta quadra está em manutenção até ' + court.maintenanceEnd.toLocaleString());
-        }
-      } else {
-        throw new BadRequestException('Esta quadra está em manutenção por tempo indeterminado');
-      }
+    if (
+      court &&
+      this.isReservationInsideMaintenanceWindow(
+        dto.date,
+        dto.startTime,
+        court.maintenanceStart,
+        court.maintenanceEnd,
+      )
+    ) {
+      throw new BadRequestException(
+        `This court is under maintenance from ${court.maintenanceStart?.toLocaleDateString() ?? 'now'} until ${court.maintenanceEnd?.toLocaleDateString() ?? 'further notice'}`,
+      );
     }
     await this.validateOperatingHours(arenaId, dto.date, dto.startTime, dto.endTime);
     const collision = await this.prisma.reservation.findFirst({
       where: {
         courtId: dto.courtId,
         date: new Date(dto.date + 'T00:00:00Z'),
-        status: { not: 'Cancelado' },
+        status: { not: 'Cancelled' },
         AND: [
           { startTime: { lt: dto.endTime } },
           { endTime: { gt: dto.startTime } },
@@ -74,7 +97,7 @@ export class ReservationsService {
       },
     });
     if (collision) {
-      throw new BadRequestException('Já existe uma reserva para esta quadra neste horário');
+      throw new BadRequestException('There is already a reservation for this court at this time');
     }
     const reservation = await this.prisma.reservation.create({
       data: {
@@ -101,7 +124,7 @@ export class ReservationsService {
       const reservationStart = new Date(year, month - 1, day, hours, minutes);
       const now = new Date();
       if (reservationStart < now) {
-        throw new BadRequestException('A reserva não pode ser alterada para um horário que já passou');
+        throw new BadRequestException('Reservation cannot be changed to a past time');
       }
       if (dto.date) {
         data.date = new Date(dto.date + 'T00:00:00Z');
@@ -110,7 +133,7 @@ export class ReservationsService {
     const startTime = dto.startTime || existing.startTime;
     const endTime = dto.endTime || existing.endTime;
     if (endTime <= startTime) {
-      throw new BadRequestException('O horário de término deve ser após o horário de início');
+      throw new BadRequestException('End time must be after start time');
     }
     const dateToCheck = dto.date || existing.date.toISOString().slice(0, 10);
     await this.validateOperatingHours(arenaId, dateToCheck, startTime, endTime);
@@ -121,7 +144,7 @@ export class ReservationsService {
         id: { not: id },
         courtId: courtIdToCheck,
         date: dateObjToCheck,
-        status: { not: 'Cancelado' },
+        status: { not: 'Cancelled' },
         AND: [
           { startTime: { lt: endTime } },
           { endTime: { gt: startTime } },
@@ -129,32 +152,31 @@ export class ReservationsService {
       },
     });
     if (collision) {
-      throw new BadRequestException('Não é possível alterar para este horário pois já existe outra reserva conflitante');
+      throw new BadRequestException('Cannot change to this time due to a conflicting reservation');
     }
     const customer = await this.prisma.customer.findUnique({
       where: { id: dto.customerId || existing.customerId },
       select: { status: true }
     });
-    if (customer?.status === 'Inativo') {
-      throw new BadRequestException('Não é possível realizar reservas para clientes inativos');
+    if (customer?.status === 'Inactive') {
+      throw new BadRequestException('Cannot make reservations for inactive customers');
     }
     const court = await this.prisma.court.findUnique({
       where: { id: dto.courtId || existing.courtId },
-      select: { status: true, maintenanceEnd: true }
+      select: { status: true, maintenanceStart: true, maintenanceEnd: true }
     });
-    if (court?.status === 'Manutencao') {
-      const dateToCheck = dto.date || existing.date.toISOString().slice(0, 10);
-      const timeToCheck = dto.startTime || existing.startTime;
-      const [y, m, d] = dateToCheck.split('-').map(Number);
-      const [h, min] = timeToCheck.split(':').map(Number);
-      const startToCheck = new Date(y, m - 1, d, h, min);
-      if (court.maintenanceEnd) {
-        if (startToCheck < court.maintenanceEnd) {
-          throw new BadRequestException('Esta quadra está em manutenção até ' + court.maintenanceEnd.toLocaleString());
-        }
-      } else {
-        throw new BadRequestException('Esta quadra está em manutenção por tempo indeterminado');
-      }
+    if (
+      court &&
+      this.isReservationInsideMaintenanceWindow(
+        dto.date || existing.date.toISOString().slice(0, 10),
+        dto.startTime || existing.startTime,
+        court.maintenanceStart,
+        court.maintenanceEnd,
+      )
+    ) {
+      throw new BadRequestException(
+        `This court is under maintenance from ${court.maintenanceStart?.toLocaleDateString() ?? 'now'} until ${court.maintenanceEnd?.toLocaleDateString() ?? 'further notice'}`,
+      );
     }
     const updated = await this.prisma.reservation.update({
       where: { id },
@@ -177,7 +199,7 @@ export class ReservationsService {
     const reservations = await this.prisma.reservation.findMany({
       where: {
         customerId,
-        status: { not: 'Cancelado' },
+        status: { not: 'Cancelled' },
       },
       include: { consumption: true }
     });
@@ -200,20 +222,21 @@ export class ReservationsService {
     const [year, month, day] = dateStr.split('-').map(Number);
     const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay(); 
-    const daysMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const daysMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = daysMap[dayOfWeek];
-    const operatingHour = arena.settings.operatingHours.find(h => 
-      h.day.toLowerCase().startsWith(dayName.toLowerCase().substring(0, 3))
+    const operatingHour = arena.settings.operatingHours.find((h) =>
+      h.day.toLowerCase().substring(0, 3) === dayName.toLowerCase().substring(0, 3)
     );
     if (!operatingHour) return;
     if (!operatingHour.enabled) {
-      throw new BadRequestException(`A arena está fechada: ${dayName}`);
+      throw new BadRequestException(`The arena is closed: ${dayName}`);
     }
     if (startTime < operatingHour.open || endTime > operatingHour.close) {
-      throw new BadRequestException(`Horário fora de operação na ${dayName}. Funcionamento: ${operatingHour.open} às ${operatingHour.close}`);
+      throw new BadRequestException(`Operating hours out of range on ${dayName}. Operating hours: ${operatingHour.open} to ${operatingHour.close}`);
     }
   }
 }
+
 
 
 
