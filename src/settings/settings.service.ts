@@ -15,7 +15,7 @@ export class SettingsService {
       },
     });
     if (!arena) {
-      throw new NotFoundException('Arena não encontrada');
+      throw new NotFoundException('Arena not found');
     }
     const team = await this.prisma.teamMember.findMany({
       where: { arenaId },
@@ -113,6 +113,7 @@ export class SettingsService {
     });
   }
 }
+
 
 
 
