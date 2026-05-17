@@ -34,7 +34,7 @@ export class CreateReservationDto {
   @Min(0)
   amount: number;
   @ApiProperty({
-    example: 'Pendente',
+    example: 'Pending',
     enum: ReservationStatus,
   })
   @IsEnum(ReservationStatus)
@@ -47,6 +47,7 @@ export class CreateReservationDto {
   @IsOptional()
   notes?: string;
 }
+
 
 
 
