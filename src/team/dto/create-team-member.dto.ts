@@ -10,13 +10,14 @@ export class CreateTeamMemberDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
-  @ApiProperty({ example: 'Recepcao', enum: UserRole })
+  @ApiProperty({ example: 'Reception', enum: UserRole })
   @IsEnum(UserRole)
   role: UserRole;
-  @ApiProperty({ example: 'Convite pendente', enum: ['Ativo', 'Convite pendente'] })
-  @IsEnum(['Ativo', 'Convite pendente'])
+  @ApiProperty({ example: 'Convite Pending', enum: ['Active', 'Convite Pending'] })
+  @IsEnum(['Active', 'Convite Pending'])
   status: string;
 }
+
 
 
 
