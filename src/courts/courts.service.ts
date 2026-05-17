@@ -1,52 +1,63 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourtDto } from './dto/create-court.dto';
 import { UpdateCourtDto } from './dto/update-court.dto';
+
 @Injectable()
 export class CourtsService {
-  constructor(private readonly prisma: PrismaService) {} 
+  constructor(private readonly prisma: PrismaService) {}
+
   async findAll(arenaId: string) {
     const courts = await this.prisma.court.findMany({
       where: { arenaId },
       orderBy: { name: 'asc' },
     });
+
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
-    const today = new Date(`${todayStr}T00:00:00Z`);
-    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    const today = new Date(`${now.toISOString().slice(0, 10)}T00:00:00Z`);
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
     const activeReservations = await this.prisma.reservation.findMany({
       where: {
         arenaId,
         date: today,
-        status: { in: ['Confirmado', 'Pendente'] }, 
-        AND: [
-          { startTime: { lte: currentTime } },
-          { endTime: { gt: currentTime } },
-        ],
+        status: { in: ['Confirmed', 'Pending'] },
+        AND: [{ startTime: { lte: currentTime } }, { endTime: { gt: currentTime } }],
       },
       select: { courtId: true },
     });
-    const occupiedCourtIds = new Set(activeReservations.map((r) => r.courtId));
+
+    const occupiedCourtIds = new Set(activeReservations.map((reservation) => reservation.courtId));
+
     return courts.map((court) => {
-      if (court.status === 'Manutencao') return court;
+      const hasActiveMaintenance =
+        court.status === 'Maintenance' &&
+        (!court.maintenanceStart || court.maintenanceStart <= now) &&
+        (!court.maintenanceEnd || court.maintenanceEnd >= now);
+
+      if (hasActiveMaintenance) {
+        return court;
+      }
+
       return {
         ...court,
-        status: occupiedCourtIds.has(court.id) ? 'Ocupada' : 'Disponivel',
+        status: occupiedCourtIds.has(court.id) ? 'Occupied' : 'Available',
       };
     });
   }
+
   async findOne(id: string, arenaId: string) {
     const court = await this.prisma.court.findFirst({
       where: { id, arenaId },
     });
+
     if (!court) {
-      throw new NotFoundException('Quadra não encontrada');
+      throw new NotFoundException('Court not found');
     }
+
     return court;
   }
+
   async create(arenaId: string, dto: CreateCourtDto) {
     return this.prisma.court.create({
       data: {
@@ -55,61 +66,61 @@ export class CourtsService {
       },
     });
   }
+
   async update(id: string, arenaId: string, dto: UpdateCourtDto) {
-    const existing = await this.findOne(id, arenaId);
+    await this.findOne(id, arenaId);
+
     let conflicts: any[] = [];
-    if (dto.status === 'Manutencao') {
-      const now = new Date();
-      const cutoff = dto.maintenanceEnd ? new Date(dto.maintenanceEnd) : now;
+    const maintenanceStart = dto.maintenanceStart ?? null;
+    const maintenanceEnd = dto.maintenanceEnd ?? null;
+
+    if (dto.status === 'Maintenance') {
+      if (!maintenanceStart || !maintenanceEnd) {
+        throw new BadRequestException('Maintenance start and end dates are required');
+      }
+
+      if (maintenanceEnd < maintenanceStart) {
+        throw new BadRequestException('Maintenance end date must be after start date');
+      }
+
       conflicts = await this.prisma.reservation.findMany({
         where: {
           courtId: id,
-          status: { in: ['Confirmado', 'Pendente'] },
-          OR: [
-            {
-              date: { gt: now }, 
-            },
-            {
-              date: { 
-                gte: new Date(now.toISOString().split('T')[0] + 'T00:00:00Z') 
-              },
-              startTime: { gte: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') }
-            }
-          ]
+          status: { in: ['Confirmed', 'Pending'] },
+          date: {
+            gte: new Date(maintenanceStart.toISOString().slice(0, 10) + 'T00:00:00.000Z'),
+            lte: new Date(maintenanceEnd.toISOString().slice(0, 10) + 'T23:59:59.999Z'),
+          },
         },
         include: {
-          customer: { select: { name: true, phone: true } }
-        }
+          customer: { select: { name: true, phone: true, email: true } },
+        },
       });
-      if (dto.maintenanceEnd) {
-        conflicts = conflicts.filter(r => {
-          const [h, m] = r.startTime.split(':').map(Number);
-          const rDate = new Date(r.date);
-          rDate.setHours(h, m);
-          return rDate < cutoff;
-        });
-      }
     }
+
     const court = await this.prisma.court.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+        maintenanceStart: dto.status === 'Maintenance' ? maintenanceStart : dto.maintenanceStart ?? null,
+        maintenanceEnd: dto.status === 'Maintenance' ? maintenanceEnd : dto.maintenanceEnd ?? null,
+      },
     });
+
     return { court, conflicts };
   }
+
   async remove(id: string, arenaId: string) {
     await this.findOne(id, arenaId);
+
     const hasReservations = await this.prisma.reservation.findFirst({
       where: { courtId: id },
     });
+
     if (hasReservations) {
-      throw new BadRequestException(
-        'Não é possível excluir uma quadra que possui reservas. Cancele ou mova as reservas primeiro.',
-      );
+      throw new BadRequestException('Cannot delete a court that has reservations. Cancel or move the reservations first.');
     }
+
     return this.prisma.court.delete({ where: { id } });
   }
 }
-
-
-
-
