@@ -12,38 +12,38 @@ datasource db {
 
 // ---------- Enums ----------
 enum ReservationStatus {
-  Confirmado
-  Pendente
-  Cancelado
+  Confirmed
+  Pending
+  Cancelled
 }
 
 enum CourtStatus {
-  Disponivel
-  Ocupada
-  Manutencao
+  Available
+  Occupied
+  Maintenance
 }
 
 enum CoverType {
-  Aberta
-  Fechada
+  Open
+  Closed
 }
 
 enum CustomerType {
-  Mensalista
-  Avulso
+  Monthly
+  Casual
 }
 
 enum PlayerLevel {
-  Iniciante
-  Intermediario
-  Avancado
+  Beginner
+  Intermediate
+  Advanced
   Pro
 }
 
 enum UserRole {
-  Administrador
-  Gerente
-  Recepcao
+  Administrator
+  Manager
+  Reception
 }
 
 // ---------- Models ----------
@@ -110,13 +110,14 @@ model Court {
   arenaId       String
   name          String
   sport         String
-  coverType     CoverType @default(Aberta)
+  coverType     CoverType @default(Open)
   address       String?
   zipCode       String?
   city          String?
   number        String?
   pricePerHour  Decimal
-  status        CourtStatus @default(Disponivel)
+  status        CourtStatus @default(Available)
+  maintenanceStart DateTime?
   maintenanceEnd DateTime?
   features      String[]
   reservations  Reservation[]
@@ -129,10 +130,10 @@ model Customer {
   name              String
   email             String       @unique
   phone             String
-  type              CustomerType @default(Avulso)
-  status            String       @default("Ativo")
+  type              CustomerType @default(Casual)
+  status            String       @default("Active")
   favoriteSport     String?
-  level             PlayerLevel? @default(Iniciante)
+  level             PlayerLevel? @default(Beginner)
   totalSpent        Decimal      @default(0)
   reservationsCount Int          @default(0)
   notes             String?

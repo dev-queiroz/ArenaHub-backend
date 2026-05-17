@@ -38,7 +38,7 @@ async function main() {
       })
     )
   );
-  console.log(`✅ ${arenas.length} arenas criadas.`);
+  console.log(`✅ ${arenas.length} arenas created.`);
 
   const mainArena = arenas[0];
 
@@ -49,11 +49,11 @@ async function main() {
       name: 'Administrador ArenaHub',
       email: 'admin@arenahub.com',
       password: hashedPassword,
-      role: 'Administrador',
-      status: 'Ativo',
+      role: 'Administrator',
+      status: 'Active',
     },
   });
-  console.log(`✅ Usuário admin criado: ${adminUser.email}`);
+  console.log(`✅ Admin user created: ${adminUser.email}`);
 
   // 3. Create Courts for Main Arena
   const sports = ['Tenis', 'Padel', 'Futebol', 'Basquete'];
@@ -64,15 +64,15 @@ async function main() {
           arenaId: mainArena.id,
           name: `Quadra ${i + 1}`,
           sport: sports[i % sports.length],
-          coverType: i % 2 === 0 ? 'Fechada' : 'Aberta',
+          coverType: i % 2 === 0 ? 'Closed' : 'Open',
           pricePerHour: 50 + (i * 10),
-          status: i === 5 ? 'Manutencao' : 'Disponivel',
-          features: ['Iluminacao LED'],
+          status: i === 5 ? 'Maintenance' : 'Available',
+          features: ['LED Lighting'],
         }
       })
     )
   );
-  console.log(`✅ ${courts.length} quadras criadas na Arena Central.`);
+  console.log(`✅ ${courts.length} courts created at Central Arena.`);
 
   // 4. Create 10 Customers (3 Inativo)
   const customerNames = [
@@ -89,8 +89,8 @@ async function main() {
           name,
           email: `${name.toLowerCase().replace(' ', '.')}@exemplo.com`,
           phone: `(11) 9${i}844-3322`,
-          type: i % 3 === 0 ? 'Mensalista' : 'Avulso',
-          status: i < 3 ? 'Inativo' : 'Ativo',
+          type: i % 3 === 0 ? 'Monthly' : 'Casual',
+          status: i < 3 ? 'Inactive' : 'Active',
           favoriteSport: sports[i % sports.length],
           totalSpent: Math.floor(Math.random() * 5000),
           reservationsCount: Math.floor(Math.random() * 50),
@@ -98,21 +98,21 @@ async function main() {
       })
     )
   );
-  console.log(`✅ ${customers.length} clientes criados (3 inativos).`);
+  console.log(`✅ ${customers.length} customers created (3 inactive).`);
 
   // 5. Create 7 Reservations
   const reservationData = [
-    { start: '18:00', end: '19:00', status: 'Confirmado' },
-    { start: '19:00', end: '20:30', status: 'Confirmado' },
-    { start: '20:00', end: '21:00', status: 'Pendente' },
-    { start: '17:00', end: '18:30', status: 'Confirmado' },
-    { start: '08:00', end: '09:00', status: 'Cancelado' },
-    { start: '10:00', end: '11:00', status: 'Confirmado' },
-    { start: '21:00', end: '22:00', status: 'Pendente' },
+    { start: '18:00', end: '19:00', status: 'Confirmed' },
+    { start: '19:00', end: '20:30', status: 'Confirmed' },
+    { start: '20:00', end: '21:00', status: 'Pending' },
+    { start: '17:00', end: '18:30', status: 'Confirmed' },
+    { start: '08:00', end: '09:00', status: 'Cancelled' },
+    { start: '10:00', end: '11:00', status: 'Confirmed' },
+    { start: '21:00', end: '22:00', status: 'Pending' },
   ];
 
-  const activeCustomers = customers.filter(c => c.status === 'Ativo');
-  const availableCourts = courts.filter(c => c.status !== 'Manutencao');
+  const activeCustomers = customers.filter(c => c.status === 'Active');
+  const availableCourts = courts.filter(c => c.status !== 'Maintenance');
 
   await Promise.all(
     reservationData.map((data, i) => 
@@ -131,7 +131,7 @@ async function main() {
       })
     )
   );
-  console.log(`✅ 7 reservas criadas.`);
+  console.log(`✅ 7 reservations created.`);
 
   // 6. Settings and Hours
   const settings = await prisma.arenaSettings.create({
@@ -144,7 +144,7 @@ async function main() {
     }
   });
 
-  const days = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   await prisma.operatingHour.createMany({
     data: days.map(day => ({
       settingsId: settings.id,
@@ -158,18 +158,18 @@ async function main() {
   // 7. Team Members
   await prisma.teamMember.createMany({
     data: [
-      { arenaId: mainArena.id, name: 'Ricardo Staff', email: 'ricardo@staff.com', role: 'Gerente', status: 'Ativo' },
-      { arenaId: mainArena.id, name: 'Ana Recepcao', email: 'ana@staff.com', role: 'Recepcao', status: 'Ativo' },
+      { arenaId: mainArena.id, name: 'Ricardo Staff', email: 'ricardo@staff.com', role: 'Manager', status: 'Active' },
+      { arenaId: mainArena.id, name: 'Ana Reception', email: 'ana@staff.com', role: 'Reception', status: 'Active' },
     ]
   });
 
-  console.log('\n🏟️  Seed atualizado com sucesso!');
-  console.log(`   Login Principal: admin@arenahub.com / arenahub`);
+  console.log('\n🏟️  Seed updated successfully!');
+  console.log(`   Main Login: admin@arenahub.com / arenahub`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro no seed:', e);
+    console.error('❌ Error in seed:', e);
     process.exit(1);
   })
   .finally(async () => {
