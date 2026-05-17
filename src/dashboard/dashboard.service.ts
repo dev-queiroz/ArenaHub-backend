@@ -16,12 +16,12 @@ export class DashboardService {
       this.prisma.court.findMany({ where: { arenaId } }),
       this.prisma.customer.findMany({ where: { arenaId } }),
     ]);
-    const billable = reservations.filter((r) => r.status !== 'Cancelado');
+    const billable = reservations.filter((r) => r.status !== 'Cancelled');
     const revenue = billable.reduce(
       (sum, r) => sum + Number(r.amount),
       0,
     );
-    const activeCustomers = customers.filter((c) => c.status === 'Ativo').length;
+    const activeCustomers = customers.filter((c) => c.status === 'Active').length;
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -71,6 +71,7 @@ export class DashboardService {
     };
   }
 }
+
 
 
 
