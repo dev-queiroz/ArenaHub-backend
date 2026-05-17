@@ -49,9 +49,9 @@ export class AuthService {
           name: dto.name,
           email: dto.email,
           password: hashedPassword,
-          role: UserRole.Administrador,
+          role: UserRole.Administrator,
           arenaId: arena.id,
-          status: 'Ativo',
+          status: 'Active',
         },
       });
     });
@@ -114,7 +114,7 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new UnauthorizedException('Usuário não encontrado');
+      throw new UnauthorizedException('User not found');
     }
     return user;
   }
@@ -140,6 +140,7 @@ export class AuthService {
     });
   }
 }
+
 
 
 
