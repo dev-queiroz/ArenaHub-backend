@@ -16,7 +16,7 @@ export class TeamService {
       where: { id, arenaId },
     });
     if (!member) {
-      throw new NotFoundException('Membro da equipe não encontrado');
+      throw new NotFoundException('Team member not found');
     }
     return member;
   }
@@ -37,6 +37,7 @@ export class TeamService {
     return this.prisma.teamMember.delete({ where: { id } });
   }
 }
+
 
 
 
