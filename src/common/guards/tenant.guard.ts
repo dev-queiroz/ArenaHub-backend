@@ -11,12 +11,13 @@ export class TenantGuard implements CanActivate {
     const arenaId = request.user?.arenaId;
     if (!arenaId) {
       throw new ForbiddenException(
-        'Contexto de tenant não encontrado. Faça login com um usuário vinculado a uma arena.',
+        'Tenant context not found. Log in with a user linked to an arena.',
       );
     }
     return true;
   }
 }
+
 
 
 
